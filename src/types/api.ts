@@ -3,6 +3,7 @@ export type AuthResponse = {
   userId: string;
   email: string;
   displayName?: string | null;
+  role: "User" | "Developer";
   expiresAt: string;
 };
 
@@ -15,6 +16,11 @@ export type RegisterBody = {
 export type LoginBody = {
   email: string;
   password: string;
+};
+
+export type ResetPasswordBody = {
+  email: string;
+  newPassword: string;
 };
 
 export type DailyNoteDto = {
@@ -39,6 +45,7 @@ export type ScheduleRequestBody = {
 };
 
 export type ScheduleSlotDto = {
+  id: string;
   slotStart: string;
   taskId: string;
   taskTitle: string;
@@ -104,6 +111,92 @@ export type UpdateTaskBody = {
   interruptionCount?: number | null;
   dueDate?: string | null;
   categoryId?: string | null;
+};
+
+export type NotificationPreferenceDto = {
+  email: string;
+  isEnabled: boolean;
+  remindBeforeMinutes: number;
+  unavailableFromMinutes?: number | null;
+  unavailableToMinutes?: number | null;
+};
+
+export type UpsertNotificationPreferenceBody = NotificationPreferenceDto;
+
+export type QuestionnaireDto = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+};
+
+export type QuestionnaireQuestionDto = {
+  id: string;
+  text: string;
+  sortOrder: number;
+  minValue: number;
+  maxValue: number;
+};
+
+export type UserQuestionnaireScheduleDto = {
+  questionnaireId: string;
+  cadence: string;
+  nextDueAtUtc: string;
+  isEnabled: boolean;
+};
+
+export type UpsertQuestionnaireScheduleBody = {
+  questionnaireId: string;
+  cadence: string;
+  nextDueAtUtc?: string | null;
+  isEnabled: boolean;
+};
+
+export type QuestionnaireAnswerItem = {
+  questionId: string;
+  value: number;
+};
+
+export type SubmitQuestionnaireBody = {
+  questionnaireId: string;
+  answers: QuestionnaireAnswerItem[];
+};
+
+export type QuestionnaireResponseDto = {
+  id: string;
+  questionnaireId: string;
+  submittedAtUtc: string;
+  totalScore: number;
+};
+
+export type DailyQuestionnairePoint = {
+  date: string;
+  avgScore: number;
+  submissions: number;
+};
+
+export type QuestionnaireBreakdownItem = {
+  questionnaireId: string;
+  avgScore: number;
+  submissions: number;
+};
+
+export type DeveloperQuestionnaireAnalyticsResponse = {
+  dailyTrend: DailyQuestionnairePoint[];
+  byQuestionnaire: QuestionnaireBreakdownItem[];
+};
+
+export type FeedbackDto = {
+  id: string;
+  userId: string;
+  message: string;
+  rating: number;
+  createdAt: string;
+};
+
+export type CreateFeedbackBody = {
+  message: string;
+  rating: number;
 };
 
 export const PLACEHOLDER_USER_ID = "00000000-0000-0000-0000-000000000000";

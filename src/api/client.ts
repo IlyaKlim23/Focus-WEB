@@ -3,7 +3,7 @@ import type { AuthResponse } from "../types/api";
 export const STORAGE_TOKEN_KEY = "focus_access_token";
 export const STORAGE_USER_KEY = "focus_user";
 
-export type StoredUser = Pick<AuthResponse, "userId" | "email" | "displayName">;
+export type StoredUser = Pick<AuthResponse, "userId" | "email" | "displayName" | "role">;
 
 export class ApiError extends Error {
   constructor(

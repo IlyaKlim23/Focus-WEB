@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: res.userId,
       email: res.email,
       displayName: res.displayName,
+      role: res.role,
     });
     navigate("/", { replace: true });
   }, [navigate]);
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId: res.userId,
       email: res.email,
       displayName: res.displayName,
+      role: res.role,
     });
     navigate("/", { replace: true });
   }, [navigate]);

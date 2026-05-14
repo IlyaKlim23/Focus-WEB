@@ -12,6 +12,7 @@ import {
   type TaskDto,
   type TaskItemStatusValue,
   type TaskPriorityValue,
+  TaskItemStatus,
   TaskPriority,
 } from "../types/api";
 
@@ -21,7 +22,6 @@ type CreateFormState = {
   priority: TaskPriorityValue;
   estimatedMinutes: string | number;
   dueDate: string;
-  categoryId: string;
 };
 
 function emptyCreateForm(): CreateFormState {
@@ -31,7 +31,6 @@ function emptyCreateForm(): CreateFormState {
     priority: TaskPriority.Medium,
     estimatedMinutes: "",
     dueDate: "",
-    categoryId: "",
   };
 }
 
@@ -72,7 +71,6 @@ export function TasksPage() {
         dueDate: createForm.dueDate
           ? new Date(createForm.dueDate).toISOString()
           : null,
-        categoryId: createForm.categoryId.trim() || null,
       }),
     onSuccess: () => {
       setCreateForm(emptyCreateForm());
@@ -96,7 +94,6 @@ export function TasksPage() {
         actualMinutes: editing.actualMinutes ?? null,
         interruptionCount: editing.interruptionCount,
         dueDate: editing.dueDate,
-        categoryId: editing.categoryId ?? null,
       });
     },
     onSuccess: () => {
@@ -113,6 +110,16 @@ export function TasksPage() {
     mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => {
       setEditing(null);
+      invalidateTasks();
+    },
+  });
+
+  const completeMut = useMutation({
+    mutationFn: (task: TaskDto) =>
+      updateTask(task.id, {
+        status: TaskItemStatus.Done,
+      }),
+    onSuccess: () => {
       invalidateTasks();
     },
   });
@@ -165,6 +172,10 @@ export function TasksPage() {
       <div className="split">
         <section className="card stack">
           <h2 className="section-title">Новая задача</h2>
+          <p className="muted">
+            Параметры планирования: укажите, сколько времени займет задача и к
+            какому времени ее желательно завершить
+          </p>
           {formError && !editing ? (
             <div className="banner banner--error">{formError}</div>
           ) : null}
@@ -210,7 +221,10 @@ export function TasksPage() {
             </select>
           </label>
           <label className="field">
-            <span className="field__label">Оценка, мин</span>
+            <span className="field__label-row">
+              <span className="field__label">Сколько примерно займет (мин)</span>
+              <Hint text="Оценка длительности задачи: сколько минут понадобится на выполнение" />
+            </span>
             <input
               className="input"
               type="number"
@@ -226,7 +240,10 @@ export function TasksPage() {
             />
           </label>
           <label className="field">
-            <span className="field__label">Срок</span>
+            <span className="field__label-row">
+              <span className="field__label">Когда нужно завершить (дедлайн)</span>
+              <Hint text="Крайний срок: до этого времени задачу желательно завершить" />
+            </span>
             <input
               className="input"
               type="datetime-local"
@@ -234,17 +251,6 @@ export function TasksPage() {
               onChange={(e) =>
                 setCreateForm((f) => ({ ...f, dueDate: e.target.value }))
               }
-            />
-          </label>
-          <label className="field">
-            <span className="field__label">Категория (UUID)</span>
-            <input
-              className="input"
-              value={createForm.categoryId}
-              onChange={(e) =>
-                setCreateForm((f) => ({ ...f, categoryId: e.target.value }))
-              }
-              placeholder="Необязательно"
             />
           </label>
           <button
@@ -280,6 +286,16 @@ export function TasksPage() {
                     </span>
                   </div>
                   <div className="task-row__actions">
+                    {t.status !== TaskItemStatus.Done ? (
+                      <button
+                        type="button"
+                        className="btn btn--small btn--primary"
+                        disabled={completeMut.isPending}
+                        onClick={() => completeMut.mutate(t)}
+                      >
+                        Завершить
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="btn btn--small btn--ghost"
@@ -325,6 +341,9 @@ export function TasksPage() {
           {formError ? (
             <div className="banner banner--error">{formError}</div>
           ) : null}
+          <p className="muted">
+            Параметры планирования: длительность задачи и желаемый дедлайн
+          </p>
           <label className="field">
             <span className="field__label">Название</span>
             <input
@@ -398,7 +417,10 @@ export function TasksPage() {
           </div>
           <div className="row row--wrap">
             <label className="field">
-              <span className="field__label">Оценка, мин</span>
+              <span className="field__label-row">
+                <span className="field__label">Сколько займет (мин)</span>
+                <Hint text="Оценка длительности задачи: сколько минут понадобится на выполнение" />
+              </span>
               <input
                 className="input"
                 type="number"
@@ -459,7 +481,10 @@ export function TasksPage() {
             </label>
           </div>
           <label className="field">
-            <span className="field__label">Срок (ISO или локально)</span>
+            <span className="field__label-row">
+              <span className="field__label">Когда завершить (дедлайн)</span>
+              <Hint text="Крайний срок: до этого времени задачу желательно завершить" />
+            </span>
             <input
               className="input"
               type="datetime-local"
@@ -476,23 +501,6 @@ export function TasksPage() {
                         dueDate: e.target.value
                           ? new Date(e.target.value).toISOString()
                           : null,
-                      }
-                    : x,
-                )
-              }
-            />
-          </label>
-          <label className="field">
-            <span className="field__label">Категория (UUID)</span>
-            <input
-              className="input"
-              value={editing.categoryId ?? ""}
-              onChange={(e) =>
-                setEditing((x) =>
-                  x
-                    ? {
-                        ...x,
-                        categoryId: e.target.value.trim() || null,
                       }
                     : x,
                 )
@@ -518,4 +526,12 @@ function toLocalDatetimeValue(iso: string): string {
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function Hint({ text }: { text: string }) {
+  return (
+    <span className="hint" title={text} aria-label={text}>
+      !
+    </span>
+  );
 }

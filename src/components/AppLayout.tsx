@@ -6,6 +6,9 @@ const nav = [
   { to: "/tasks", label: "Задачи" },
   { to: "/notes", label: "Дневник" },
   { to: "/schedule", label: "Расписание" },
+  { to: "/notifications", label: "Оповещения" },
+  { to: "/questionnaires", label: "Опросники" },
+  { to: "/feedback", label: "Обратная связь" },
 ];
 
 export function AppLayout() {
@@ -18,7 +21,12 @@ export function AppLayout() {
           Focus
         </NavLink>
         <nav className="nav">
-          {nav.map(({ to, label, end }) => (
+          {[
+            ...nav,
+            ...(user?.role === "Developer"
+              ? [{ to: "/developer/analytics", label: "Developer", end: false }]
+              : []),
+          ].map(({ to, label, end }) => (
             <NavLink
               key={to}
               to={to}

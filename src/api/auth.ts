@@ -1,4 +1,4 @@
-import type { AuthResponse, LoginBody, RegisterBody } from "../types/api";
+import type { AuthResponse, LoginBody, RegisterBody, ResetPasswordBody } from "../types/api";
 import { apiRequest, STORAGE_TOKEN_KEY, STORAGE_USER_KEY, type StoredUser } from "./client";
 
 function persistSession(data: AuthResponse) {
@@ -7,6 +7,7 @@ function persistSession(data: AuthResponse) {
     userId: data.userId,
     email: data.email,
     displayName: data.displayName,
+    role: data.role,
   };
   localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
 }
@@ -29,6 +30,14 @@ export async function login(body: LoginBody): Promise<AuthResponse> {
   });
   persistSession(data);
   return data;
+}
+
+export async function resetPassword(body: ResetPasswordBody): Promise<void> {
+  await apiRequest<void>("/Auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(body),
+    skipAuth: true,
+  });
 }
 
 export function clearSession() {

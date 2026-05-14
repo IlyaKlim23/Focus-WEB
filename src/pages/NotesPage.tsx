@@ -4,6 +4,16 @@ import { ApiError } from "../api/client";
 import { fetchDailyNote, upsertDailyNote } from "../api/dailyNotes";
 import { formatRuDateTime, todayYmd } from "../lib/dates";
 
+const SCALE_OPTIONS = [1, 2, 3, 4, 5] as const;
+
+/** Целое 1–5 для UI; иначе пусто */
+function noteScaleToFormValue(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return "";
+  const n = Math.round(Number(v));
+  if (n < 1 || n > 5) return "";
+  return String(n);
+}
+
 export function NotesPage() {
   const qc = useQueryClient();
   const [date, setDate] = useState(todayYmd);
@@ -21,16 +31,8 @@ export function NotesPage() {
     const n = noteQuery.data;
     if (n) {
       setContent(n.content);
-      setMoodScore(
-        n.moodScore != null && !Number.isNaN(n.moodScore)
-          ? String(n.moodScore)
-          : "",
-      );
-      setEnergyLevel(
-        n.energyLevel != null && !Number.isNaN(n.energyLevel)
-          ? String(n.energyLevel)
-          : "",
-      );
+      setMoodScore(noteScaleToFormValue(n.moodScore));
+      setEnergyLevel(noteScaleToFormValue(n.energyLevel));
     } else if (!noteQuery.isLoading && noteQuery.isFetched) {
       setContent("");
       setMoodScore("");
@@ -42,10 +44,8 @@ export function NotesPage() {
     mutationFn: () =>
       upsertDailyNote(date, {
         content: content.trim(),
-        moodScore:
-          moodScore.trim() === "" ? null : Number(moodScore),
-        energyLevel:
-          energyLevel.trim() === "" ? null : Number(energyLevel),
+        moodScore: moodScore === "" ? null : Number(moodScore),
+        energyLevel: energyLevel === "" ? null : Number(energyLevel),
       }),
     onSuccess: (data) => {
       setSaveError(null);
@@ -118,26 +118,34 @@ export function NotesPage() {
 
         <div className="row row--wrap">
           <label className="field">
-            <span className="field__label">Настроение (число)</span>
-            <input
+            <span className="field__label">Настроение (1–5, необязательно)</span>
+            <select
               className="input"
-              type="number"
-              step="0.1"
               value={moodScore}
               onChange={(e) => setMoodScore(e.target.value)}
-              placeholder="Необязательно"
-            />
+            >
+              <option value="">Не указано</option>
+              {SCALE_OPTIONS.map((v) => (
+                <option key={v} value={String(v)}>
+                  {v}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="field">
-            <span className="field__label">Энергия (число)</span>
-            <input
+            <span className="field__label">Энергия (1–5, необязательно)</span>
+            <select
               className="input"
-              type="number"
-              step="0.1"
               value={energyLevel}
               onChange={(e) => setEnergyLevel(e.target.value)}
-              placeholder="Необязательно"
-            />
+            >
+              <option value="">Не указано</option>
+              {SCALE_OPTIONS.map((v) => (
+                <option key={v} value={String(v)}>
+                  {v}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 
